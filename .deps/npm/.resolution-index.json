@@ -1,0 +1,10 @@
+{
+  "sol contract/ChatGPT/simpleStorage.sol": {
+    "__sources__": {
+      "sol contract/ChatGPT/simpleStorage.sol": {
+        "content": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.20;\n\ncontract SimpleStorage {\n    uint256 public storedNumber;\n\n    function set(uint256 _number) public {\n        storedNumber = _number;\n    }\n\n    function get() public view returns (uint256) {\n        return storedNumber;\n    }\n}",
+        "file": "sol contract/ChatGPT/simpleStorage.sol"
+      }
+    }
+  }
+}
