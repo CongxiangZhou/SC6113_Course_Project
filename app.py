@@ -1,6 +1,9 @@
+import datetime
 import os
+import re
+import sqlite3
 
-from flask import Flask, jsonify, render_template
+from flask import Flask, jsonify, redirect, render_template, request, url_for
 from web3 import Web3
 
 app = Flask(__name__)
@@ -67,6 +70,28 @@ ABI = [
 ]
 
 
+# ---------- Database (SQLite, same approach as the main branch) ----------
+# One local file. Each request opens a connection, runs its SQL, commits and
+# closes it again.
+DB_PATH = os.environ.get("DB_PATH", "history.db")
+
+
+def init_db():
+    """Create the history table the first time the app starts."""
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute(
+        "CREATE TABLE IF NOT EXISTS history "
+        "(wallet text, number text, tx_hash text, timestamp timestamp)"
+    )
+    conn.commit()
+    c.close()
+    conn.close()
+
+
+init_db()
+
+
 def get_contract():
     """Return a read-only contract instance, or None if RPC is unavailable."""
     if not RPC_URL:
@@ -112,6 +137,61 @@ def api_number():
 
     # Return as a string so large uint256 values are not rounded by JavaScript.
     return jsonify({"number": str(number)})
+
+
+@app.route("/api/history", methods=["POST"])
+def api_add_history():
+    """Called by the frontend after a set() transaction is confirmed."""
+    data = request.get_json(silent=True) or {}
+    wallet = str(data.get("wallet", ""))
+    number = str(data.get("number", ""))
+    tx_hash = str(data.get("tx_hash", ""))
+
+    if not re.fullmatch(r"0x[0-9a-fA-F]{40}", wallet):
+        return jsonify({"error": "Invalid wallet address."}), 400
+    if not re.fullmatch(r"\d+", number):
+        return jsonify({"error": "Invalid number."}), 400
+    if not re.fullmatch(r"0x[0-9a-fA-F]{64}", tx_hash):
+        return jsonify({"error": "Invalid transaction hash."}), 400
+
+    time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute(
+        "INSERT INTO history (wallet, number, tx_hash, timestamp) VALUES (?,?,?,?)",
+        (wallet, number, tx_hash, time),
+    )
+    conn.commit()
+    c.close()
+    conn.close()
+    return jsonify({"ok": True})
+
+
+@app.route("/history", methods=["GET", "POST"])
+def history():
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute("SELECT wallet, number, tx_hash, timestamp FROM history ORDER BY timestamp DESC")
+    rows = c.fetchall()
+    c.close()
+    conn.close()
+    return render_template(
+        "history.html",
+        rows=rows,
+        explorer_url=EXPLORER_URL.rstrip("/"),
+        cleared=request.args.get("cleared") == "1",
+    )
+
+
+@app.route("/deleteHistory", methods=["POST"])
+def delete_history():
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute("DELETE FROM history")
+    conn.commit()
+    c.close()
+    conn.close()
+    return redirect(url_for("history", cleared=1))
 
 
 if __name__ == "__main__":

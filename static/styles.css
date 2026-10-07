@@ -632,3 +632,40 @@ input {
         padding: 8px;
     }
 }
+
+
+/* ---------- History table ---------- */
+
+.table-wrap {
+    overflow-x: auto;
+}
+
+.history-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.history-table th,
+.history-table td {
+    text-align: left;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+}
+
+.history-table th {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.history-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+a.btn {
+    text-decoration: none;
+}

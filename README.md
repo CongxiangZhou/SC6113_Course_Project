@@ -7,6 +7,22 @@ A minimal Flask + HTML + CSS DApp for a `SimpleStorage` smart contract.
 - **Write** (`set(uint256)`): signed in the browser by the user's MetaMask wallet.
   The server never holds a private key.
 
+## Database (this branch)
+
+Every confirmed `set()` transaction is also saved to a local **SQLite** database,
+using the same `sqlite3` approach as the `main` branch (open a connection,
+execute, commit, close in each route).
+
+- File: `history.db` (created automatically on first run; path can be changed with `DB_PATH`)
+- Table: `history (wallet text, number text, tx_hash text, timestamp timestamp)`
+- `POST /api/history` — the frontend calls this after `tx.wait()` succeeds
+- `GET /history` — page listing all records, with explorer links
+- `POST /deleteHistory` — clears the table
+
+Note: the blockchain stays the source of truth for the stored number; the
+database is an off-chain log, so its records are only as trustworthy as the
+client that sent them.
+
 ## Project structure
 
 ```
@@ -14,6 +30,7 @@ app.py               Flask backend (reads the contract via web3.py)
 requirements.txt
 Procfile             gunicorn entry point for cloud hosts
 templates/index.html Frontend (ethers.js + MetaMask)
+templates/history.html History page (reads from SQLite)
 static/styles.css
 ```
 
@@ -35,6 +52,7 @@ Open http://localhost:5000. Make sure MetaMask is on the same network the contra
 | `CONTRACT_ADDRESS` | no       | Override the default contract address            |
 | `SECRET_KEY`       | no       | Flask secret key                                 |
 | `PORT`             | no       | Port for `python app.py` (default 5000)          |
+| `DB_PATH`          | no       | SQLite file path (default `history.db`)          |
 
 Do not commit your RPC API key — set it as an environment variable on your host.
 

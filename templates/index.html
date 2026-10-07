@@ -148,6 +148,10 @@
                     <span class="label">Network</span>
                     <span>{{ chain_name }} <span class="muted">(chain ID {{ chain_id }})</span></span>
                 </div>
+                <div class="detail">
+                    <span class="label">History</span>
+                    <a class="link" href="{{ url_for('history') }}">View stored-number history →</a>
+                </div>
             </div>
         </section>
 
@@ -368,6 +372,19 @@ async function refreshNumber() {
     }
 }
 
+async function saveHistory(value, txHash) {
+    // Save a record of this transaction in the Flask SQLite database.
+    try {
+        await fetch("{{ url_for('api_add_history') }}", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ wallet: account, number: value, tx_hash: txHash }),
+        });
+    } catch (error) {
+        console.error("Could not save history:", error);
+    }
+}
+
 async function setNumber(event) {
     event.preventDefault();
 
@@ -400,6 +417,7 @@ async function setNumber(event) {
             { href: `${EXPLORER_URL}/tx/${tx.hash}`, text: "View transaction ↗" });
         $("numberInput").value = "";
 
+        await saveHistory(value, tx.hash);
         await refreshNumber();
 
     } catch (error) {

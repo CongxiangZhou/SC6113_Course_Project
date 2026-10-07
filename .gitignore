@@ -3,3 +3,6 @@ __pycache__/
 .venv/
 venv/
 .env
+
+# SQLite database (created automatically on first run)
+*.db
