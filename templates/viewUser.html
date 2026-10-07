@@ -1,0 +1,18 @@
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+
+<body>
+    <div class="container">
+        <h4>User Log:</h4>
+        {% if r %}
+        <div style="white-space: pre-line;">{{ r }}</div>
+        {% else %}
+        <p>The database is empty.</p>
+        {% endif %}
+        <form action = "/main" method = "post">
+            <input type="submit" value="Main">
+        </form>
+    </div>
+</body>
